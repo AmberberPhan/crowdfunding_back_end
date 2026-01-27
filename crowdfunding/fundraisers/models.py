@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth import get_user_model #We cant directly import custom function so you have to use the help function to find it for you
 
 # Create your models here.
 class Fundraiser(models.Model): #U would always need to reference Model here whenever you create another class)
@@ -8,6 +9,11 @@ class Fundraiser(models.Model): #U would always need to reference Model here whe
     image = models.URLField()
     is_open = models.BooleanField()
     date_created = models.DateTimeField(auto_now_add=True) #The auto_now_add will take the date and time and add to the database)
+    owner = models.ForeignKey(
+        get_user_model(), #Since you can always change the user models so Django has this function so that you dont have to go and change the model in your codes
+        on_delete=models.CASCADE, #When the model is deleted all linked will be deleted
+        related_name='owned_fundraisers'
+    )
 
 class Pledge(models.Model):
     amount = models.IntegerField()
@@ -16,5 +22,10 @@ class Pledge(models.Model):
     fundraiser = models.ForeignKey(
         'Fundraiser', #Tell u which class it refers to
         on_delete=models.CASCADE, #in case a fundraiser is deleted the pledges linked to that fundraiser will auto be deleted, otherwise it will be bad data if the database just have pledges without frundraisers)
+        related_name='pledges'
+    )
+    supporter = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
         related_name='pledges'
     )

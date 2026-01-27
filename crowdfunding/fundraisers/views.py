@@ -18,7 +18,7 @@ class FundraiserList(APIView):
     def post(self, request): #This function is responsible for checking our data if its valid
         serializer = FundraiserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(owner=request.user)
             return Response(
                 serializer.data,
                 status=status.HTTP_201_CREATED
