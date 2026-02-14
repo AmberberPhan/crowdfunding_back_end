@@ -21,11 +21,9 @@ As a creator, I want to delete my fundraiser if needed.
 
 Supporter
 As a supporter, I want to pledge to a fundraiser so I can help improve someone’s wellness.
-As a supporter, I want to be prevented from pledging to a fundraiser that is closed.
-As a supporter, I want my pledge history to be saved in my account.
 As a supporter, I want to edit my pledge comment / anonymity if I change my mind.
 As a supporter, I want to delete my pledge if needed.
-
+As a supporter, I want to be prevented from pledging to a fundraiser that is closed.
 
 Admin (superuser)
 As an admin, I want to view and approve wellness fundraisers so only genuine wellbeing campaigns are visible publicly.
@@ -87,17 +85,26 @@ It can be helpful to keep the markdown preview open in VS Code so that you can s
 | /pledges/id/     | DELETE      | Delete pledge (supporter only)                            | N/A                                                             | 204 No Content        | Token required + Supporter only |
 
 ### DB Schema
-![]( {{ ./relative/path/to/your/schema/image.png }} )
+https://ibb.co/vCc8q6sK
 
 ### Link to Heroku: https://berber-04a1086dd4f2.herokuapp.com/users/
 
 
 ### Screenshots
-GET request: https://ibb.co/nMgTWs3B
 
-POST request: https://ibb.co/WvY3Nk9p
+POST request: POST /fundraisers/
+https://ibb.co/TxwT0JQ6
+https://ibb.co/pj8cRNn4
+https://ibb.co/VWwBVf6b
 
-Token being returned: https://ibb.co/wDMJvRq
+GET request: GET /fundraisers/ (Fundraiser only shows if admin approves the fundraiser)
+https://ibb.co/9kz1H8VX
+https://ibb.co/Xf2Tsph6
+https://ibb.co/BVkM7cGC
+
+Get Auth Token:
+https://ibb.co/Sw9CPQ90
+https://ibb.co/23tBg5FH
 
 ### Step by step instructions for how to register a new user and create a new fundraiser (i.e. endpoints and body data);
 
@@ -148,7 +155,7 @@ owner is automatically set to the logged-in user.
 
 is_approved defaults to false and must be approved in Django Admin before it appears in GET /fundraisers/
 
-STEP 4: Approve the fundraiser in Django Admin (so it appears in the fundraiser list)
+STEP 4: Approve the fundraiser in Django Admin (then it appears in the fundraiser list)
 
 Go to: http://127.0.0.1:8000/admin/
 
@@ -160,4 +167,4 @@ Select the fundraiser you want to approve.
 
 Set is_approved = True
 
-Click Save. Then the fundraiser will appear when you call Endpoint: GET /fundraisers/
+Click Save. Then the fundraiser will appear when you call endpoint: GET /fundraisers/
