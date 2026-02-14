@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.generics import get_object_or_404 #This is another option besides the one in the content
 from .models import Fundraiser, Pledge
 from .permissions import IsOwnerOrReadOnly
+from .permissions import IsSupporterOrReadOnly
 from .serializers import FundraiserSerializer, PledgeSerializer, FundraiserDetailSerializer
 
 class FundraiserList(APIView):
@@ -16,7 +17,7 @@ class FundraiserList(APIView):
        IsOwnerOrReadOnly
     ]
     def get(self, request):
-        fundraiser = Fundraiser.objects.all()
+        fundraiser = Fundraiser.objects.filter(is_approved = True) #Changing this from .all to filter so only approved campaign is shown
         serializer = FundraiserSerializer(fundraiser, many = True)
         return Response(serializer.data) #This is like sending the result back to the client
     
@@ -52,6 +53,7 @@ class FundraiserDetail(APIView):
             data=request.data,
             partial=True
         )
+        
 
         if serializer.is_valid():
             serializer.save()
@@ -61,7 +63,13 @@ class FundraiserDetail(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+    # Adding Fundraiser Delete
+    def delete(self, request, pk):
+        fundraiser = get_object_or_404(Fundraiser, pk=pk)
+        self.check_object_permissions(request, fundraiser)
+        fundraiser.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class PledgeList(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
@@ -70,15 +78,60 @@ class PledgeList(APIView):
         serializer = PledgeSerializer(pledges, many=True)
         return Response(serializer.data)
     
+
     def post(self, request):
+        fundraiser_id = request.data.get('fundraiser')
+        fundraiser = get_object_or_404(Fundraiser, pk=fundraiser_id)
+        
+        if not fundraiser.is_open:
+            return Response(
+                {"detail": "This fundraiser is closed and not accepting new pledges."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         serializer = PledgeSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(supporter=request.user)
             return Response(
                 serializer.data,
                 status=status.HTTP_201_CREATED
             )
+
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+class PledgeDetail(APIView):
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsSupporterOrReadOnly
+    ]
+
+    def get(self, request, pk):
+        pledge = get_object_or_404(Pledge, pk=pk)
+        serializer = PledgeSerializer(pledge)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        pledge = get_object_or_404(Pledge, pk=pk)
+        self.check_object_permissions(request, pledge)
+
+        # Only allow updating comment + anonymous
+        data = {
+            "comment": request.data.get("comment", pledge.comment),
+            "anonymous": request.data.get("anonymous", pledge.anonymous),
+        }
+
+        serializer = PledgeSerializer(instance=pledge, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        pledge = get_object_or_404(Pledge, pk=pk)
+        self.check_object_permissions(request, pledge)
+        pledge.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
