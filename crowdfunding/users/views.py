@@ -1,11 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from .models import CustomUser
-from .serializers import CustomUserSerializer
+from .serializers import CustomUserSerializer, MeSerializer
 
 class CustomUserList(APIView):
     def get(self, request):
@@ -48,3 +48,21 @@ class CustomAuthToken(ObtainAuthToken):
             'user_id': user.id,
             'email': user.email
         })
+
+class MeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = MeSerializer(request.user)
+        return Response(serializer.data)
+
+    def put(self, request):
+        serializer = MeSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        request.user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

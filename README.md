@@ -28,7 +28,7 @@ As a supporter, I want to delete my pledge if needed.
 
 
 Admin (superuser)
-As an admin, I want to approve wellness fundraisers so only genuine wellbeing campaigns are visible publicly.
+As an admin, I want to view and approve wellness fundraisers so only genuine wellbeing campaigns are visible publicly.
 
 ### Front End Pages/Functionality
 - {{ A page on the front end }}
@@ -70,25 +70,21 @@ It might look messy here in the PDF, but once it's rendered it looks very neat!
 
 It can be helpful to keep the markdown preview open in VS Code so that you can see what you're typing more easily. }}
 
-| URL | HTTP Method | Purpose | Request Body | Success Response Code | Authentication/Authorisation |
-| --- | ----------- | ------- | ------------ | --------------------- | ---------------------------- |
-|     |             |         |              |                       |                              |
-
-
-| URL              | HTTP Method | Purpose                                                   | Request Body                                           | Success Response Code | Authentication/Authorisation    |
-|------------------|-------------|-----------------------------------------------------------|--------------------------------------------------------|-----------------------|---------------------------------|
-| /users/          | POST        | Register a new user                                       | { "username", "email", "password" }                    | 201 Created           | None                            |
-| /api-token-auth/ | POST        | Get auth token + current user details                     | { "username", "password" }                             | 200 OK                | None                            |
-| /fundraisers/    | POST        | Create a new fundraiser                                   | { "title", "description", "goal", "image", "is_open" } | 201 Created           | Auth required                   |
-| /fundraisers/id/ | GET         | View a single fundraiser                                  | N/A                                                    | 200 OK                | None                            |
-| /fundraisers/id/ | PUT/PATCH   | Update fundraiser (owner only)                            | { fields to update }                                   | 200 OK                | Auth (Owner only)               |
-| /fundraisers/id/ | DELETE      | Delete fundraiser (owner only)                            | N/A                                                    | 204 No Content        | Auth (Owner only)               |
-| /fundraisers/    | GET         | List all approved fundraisers                             | N/A                                                    | 200 OK                | None                            |
-| /pledges/        | POST        | Create a pledge                                           | { "amount", "comment", "anonymous", "fundraiser" }     | 201 Created           | Auth required                   |
-| /pledges/id/     | DELETE      | Delete a pledge (supporter only)                          | N/A                                                    | 204 No Content        | Auth (Supporter only)           |
-| /pledges/{id}/   | PUT/PATCH   | Update pledge (comment + anonymous only) (supporter only) | { "comment": "", "anonymous": false }                  | 200 OK                | Token required + Supporter only |
-| /pledges/{id}/   | DELETE      | Delete pledge (supporter only)                            | N/A                                                    | 204 No Content        | Token required + Supporter only |
-
+| URL              | HTTP Method | Purpose                                                   | Request Body                                                    | Success Response Code | Authentication/Authorisation    |
+|------------------|-------------|-----------------------------------------------------------|-----------------------------------------------------------------|-----------------------|---------------------------------|
+| /users/          | POST        | Register a new user                                       | { "username", "email", "password" }                             | 201 Created           | None                            |
+| /users/me/       | PUT/PATCH   | Update current user (username/email/password)             | Any of: { "username": "" }, { "email": "" }, { "password": "" } | 200 OK                | Auth required (self only)       |
+| /users/me/       | DELETE      | Delete current user account                               | N/A                                                             | 204 No Content        | Auth required (self only)       |
+| /api-token-auth/ | POST        | Get auth token + current user details                     | { "username", "password" }                                      | 200 OK                | None                            |
+| /fundraisers/    | POST        | Create a new fundraiser                                   | { "title", "description", "goal", "image", "is_open" }          | 201 Created           | Auth required                   |
+| /fundraisers/id/ | GET         | View a single fundraiser                                  | N/A                                                             | 200 OK                | None                            |
+| /fundraisers/id/ | PUT/PATCH   | Update fundraiser (owner only)                            | { fields to update }                                            | 200 OK                | Auth (Owner only)               |
+| /fundraisers/id/ | DELETE      | Delete fundraiser (owner only)                            | N/A                                                             | 204 No Content        | Auth (Owner only)               |
+| /fundraisers/    | GET         | List all approved fundraisers                             | N/A                                                             | 200 OK                | None                            |
+| /pledges/        | POST        | Create a pledge                                           | { "amount", "comment", "anonymous", "fundraiser" }              | 201 Created           | Auth required                   |
+| /pledges/id/     | DELETE      | Delete a pledge (supporter only)                          | N/A                                                             | 204 No Content        | Auth (Supporter only)           |
+| /pledges/id/     | PUT/PATCH   | Update pledge (comment + anonymous only) (supporter only) | { "comment": "", "anonymous": false }                           | 200 OK                | Token required + Supporter only |
+| /pledges/id/     | DELETE      | Delete pledge (supporter only)                            | N/A                                                             | 204 No Content        | Token required + Supporter only |
 
 ### DB Schema
 ![]( {{ ./relative/path/to/your/schema/image.png }} )
@@ -103,4 +99,65 @@ POST request: https://ibb.co/WvY3Nk9p
 
 Token being returned: https://ibb.co/wDMJvRq
 
-Step by step instructions for how to register a new user and create a new fundraiser (i.e. endpoints and body data);
+### Step by step instructions for how to register a new user and create a new fundraiser (i.e. endpoints and body data);
+
+STEP 1: Register a new user
+
+Endpoint: POST /users/
+
+  "username": "Amber",
+  "email": "abc@email.com",
+  "password": "pass123"
+
+Success response: 201 Created
+
+STEP 2: Get an authentication token (log in)
+
+Endpoint: POST /api-token-auth/
+
+  "username": "Amber",
+  "password": "passw123"
+
+Success response: 200 OK
+Example response (token):
+
+  "token": "123454...",
+  "user_id": 1,
+  "email": "abc@email.com"
+
+STEP 3 Create a fundraiser (must be logged in):
+
+Endpoint: POST /fundraisers/
+Authentication header:
+
+Authorization: Token 123454...
+
+Example request body (JSON):
+
+  "title": "Mental Wellness Support",
+  "description": "Raising funds for mental wellness support.",
+  "goal": 500,
+  "image": "https://example.com/image.jpg",
+  "is_open": true
+
+
+Success response: 201 Created
+Notes:
+
+owner is automatically set to the logged-in user.
+
+is_approved defaults to false and must be approved in Django Admin before it appears in GET /fundraisers/
+
+STEP 4: Approve the fundraiser in Django Admin (so it appears in the fundraiser list)
+
+Go to: http://127.0.0.1:8000/admin/
+
+Log in with superuser account.
+
+Click Fundraisers.
+
+Select the fundraiser you want to approve.
+
+Set is_approved = True
+
+Click Save. Then the fundraiser will appear when you call Endpoint: GET /fundraisers/
